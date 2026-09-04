@@ -1,0 +1,837 @@
+.mobile-app {
+  --green: #078650;
+  --deep-green: #075b41;
+  --muted: #7d8188;
+  --line: #e6ebea;
+  color: #252a2d;
+  background: linear-gradient(140deg, #f9fbfa, #f5f8f7);
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 17px;
+  line-height: 1.5;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden
+}
+
+/* WXSS rejects universal selectors, including descendant and pseudo-element
+   forms. Keep box sizing on the concrete layout and control classes. */
+.mobile-app,
+.phone-status,
+.status-signals,
+.battery,
+.mobile-header,
+.wechat-capsule,
+.capsule-divider,
+.capsule-circle,
+.capsule-circle::after,
+.icon-button,
+.mobile-content,
+.mobile-card,
+.student-card,
+.quick-actions,
+.quick-action,
+.action-icon,
+.mobile-tabbar,
+.day-selector,
+.day-button,
+.meal-card,
+.meal-main,
+.meal-photo,
+.meal-description,
+.meal-note,
+.notice,
+.primary-button,
+.inline-feedback,
+.form-row,
+.date-value,
+.stop-form,
+.field-label,
+.reason-grid,
+.reason-button,
+.reason-note,
+.rule-grid,
+.rule-card,
+.rule-description,
+.rule-detail,
+.teacher-form,
+.teacher-meal,
+.payment-button,
+.payment-success,
+.success-seal,
+.record-tabs,
+.records-list,
+.record-row,
+.record-copy,
+.status-tag,
+.weekly-detail,
+.profile-action,
+.mobile-toast,
+.empty-state {
+  box-sizing: border-box
+}
+
+.mobile-app button {
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  line-height: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: 0
+}
+
+.mobile-app button::after {
+  border: 0
+}
+
+.mobile-app button:focus-visible {
+  outline: 3px solid #ffb837;
+  outline-offset: 3px
+}
+
+.mobile-app button:active {
+  opacity: .78
+}
+
+.mobile-app .muted {
+  color: var(--muted)
+}
+
+.phone-status {
+  height: 40px;
+  padding: 10px 24px 0;
+  flex-shrink: 0;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  color: #101b20;
+  font-family: Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 600
+}
+
+.status-signals {
+  display: flex !important;
+  gap: 4px;
+  align-items: center;
+  font-size: 13px
+}
+
+.battery {
+  width: 20px;
+  height: 9px;
+  border: 1px solid #7f898c;
+  border-radius: 3px;
+  background: #182327;
+  box-shadow: inset 0 0 0 1px #f8faf9
+}
+
+.mobile-header {
+  height: 62px;
+  flex-shrink: 0;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-size: 22px;
+  font-weight: 600
+}
+
+.brand-title {
+  color: #007e49;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 1px
+}
+
+.wechat-capsule {
+  position: absolute;
+  right: 13px;
+  top: 17px;
+  width: 76px;
+  height: 29px;
+  border: 1px solid #e2e7e5;
+  border-radius: 18px;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-evenly;
+  background: #fff9
+}
+
+.capsule-divider {
+  height: 17px;
+  width: 1px;
+  background: #e5e7e6
+}
+
+.capsule-circle {
+  border: 2px solid #27312f;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  position: relative
+}
+
+.capsule-circle::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #27312f;
+  top: 3px;
+  left: 3px
+}
+
+.back-button {
+  position: absolute;
+  left: 13px;
+  width: 35px;
+  height: 40px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center
+}
+
+.mobile-content {
+  flex: 1;
+  min-height: 0;
+  padding: 4px 14px 20px;
+  overflow-y: auto;
+  scrollbar-width: none
+}
+
+.mobile-content::-webkit-scrollbar {
+  display: none
+}
+
+.mobile-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  box-shadow: 0 2px 9px #163e2810
+}
+
+.student-card {
+  position: relative;
+  display: flex !important;
+  align-items: center;
+  padding: 7px 12px;
+  margin-bottom: 10px;
+  min-height: 101px;
+  gap: 15px
+}
+
+.student-copy {
+  position: relative;
+  z-index: 1
+}
+
+.student-name {
+  font-size: 21px;
+  font-weight: 600;
+  display: block !important;
+  white-space: nowrap
+}
+
+.student-greeting {
+  font-size: 14px;
+  letter-spacing: 1px;
+  margin-top: 9px;
+  display: block !important
+}
+
+.profile-leaf {
+  position: absolute !important;
+  right: 7px;
+  bottom: 0
+}
+
+
+.quick-actions {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px
+}
+
+.mobile-app .quick-action {
+  display: flex !important;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px 12px;
+  height: 80px;
+  font-size: 18px;
+  font-weight: 500;
+  color: #214e40
+}
+
+.action-icon {
+  width: 45px;
+  height: 47px;
+  border-radius: 11px;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #189d65, #00814c)
+}
+
+.action-icon.amber {
+  background: #ffa915;
+  border-radius: 50%
+}
+
+.mobile-tabbar {
+  height: 82px;
+  flex-shrink: 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 17px 17px 0 0;
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 9px 0 max(9px, env(safe-area-inset-bottom))
+}
+
+.mobile-tabbar button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: #646b70;
+  font-size: 14px
+}
+
+.mobile-tabbar button.active {
+  color: #078650;
+  font-weight: 600
+}
+
+.day-selector {
+  display: grid !important;
+  grid-template-columns: repeat(5, 1fr);
+  padding: 7px 4px;
+  margin-bottom: 13px
+}
+
+.mobile-app .day-button {
+  padding: 10px 0;
+  font-size: 15px;
+  color: #71777e;
+  border-radius: 11px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px
+}
+
+.mobile-app .selected {
+  background: linear-gradient(110deg, #09985b, #07834f);
+  color: #fff
+}
+
+
+.meal-card {
+  padding: 13px 9px 15px;
+  margin-bottom: 14px
+}
+
+.meal-main {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 12px
+}
+
+.meal-photo {
+  width: 185px;
+  height: 177px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 24px;
+  background: #fcfaf5;
+  flex-shrink: 0
+}
+
+.snack-photo {
+  background: #fffaf0
+}
+
+.meal-description {
+  padding-top: 1px;
+  flex: 1;
+  min-width: 0
+}
+
+.meal-name {
+  font-weight: 600;
+  display: block !important;
+  font-size: 19px;
+  margin-bottom: 7px;
+  white-space: nowrap
+}
+
+.dish-line {
+  display: block !important;
+  font-size: 16px;
+  color: #62676c;
+  line-height: 1.8
+}
+
+.meal-note {
+  display: block !important;
+  font-size: 15px;
+  padding: 13px 5px 0
+}
+
+.notice {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  border-radius: 11px;
+  padding: 13px;
+  font-size: 16px;
+  margin-bottom: 17px
+}
+
+.notice.warning {
+  background: #fff4da;
+  border: 1px solid #f9e7b7
+}
+
+.mobile-app .primary-button {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  background: linear-gradient(110deg, #0b945b, #00884d);
+  border-radius: 12px;
+  color: #fff;
+  width: 100%;
+  height: 59px;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: 2px
+}
+
+.inline-feedback {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: #078650;
+  font-size: 14px;
+  margin-top: 15px
+}
+
+.inline-feedback button {
+  text-decoration: underline
+}
+
+.form-row {
+  display: flex !important;
+  min-height: 57px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #edf0ee;
+  font-size: 16px;
+  gap: 6px
+}
+
+.date-value {
+  min-width: 179px;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  color: #292e31
+}
+
+.stop-form {
+  padding: 0 10px 12px
+}
+
+.field-label {
+  display: block !important;
+  font-size: 16px;
+  color: #777d82;
+  padding: 12px 0 10px
+}
+
+.reason-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px
+}
+
+.mobile-app .reason-button {
+  position: relative;
+  display: flex !important;
+  align-items: center;
+  padding: 10px 6px;
+  gap: 7px;
+  min-height: 94px;
+  background: #fff;
+  border: 1px solid #e2e7e5;
+  border-radius: 12px;
+  text-align: left
+}
+
+.mobile-app .reason-button.selected {
+  background: #eef8f2;
+  border-color: #0c955b;
+  color: #075d3f
+}
+
+.reason-title {
+  font-size: 17px;
+  font-weight: 600;
+  display: block !important;
+  margin-bottom: 6px
+}
+
+.reason-description {
+  display: block !important;
+  color: #8a8d92;
+  font-size: 12px;
+  line-height: 1.65;
+  max-width: 88px
+}
+
+.selected-check {
+  position: absolute;
+  top: 5px;
+  right: 5px
+}
+
+.stop-submit {
+  margin-top: 15px !important
+}
+
+.reason-note {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px;
+  margin-top: 10px;
+  width: 100%;
+  height: 75px;
+  font: inherit;
+  font-size: 15px
+}
+
+.rule-notice {
+  padding: 11px;
+  background: #e8f5ee;
+  color: #3c7e5e;
+  border: 1px solid #dceee4;
+  font-size: 14px;
+  gap: 7px;
+  margin-bottom: 13px
+}
+
+.rule-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px 11px
+}
+
+.mobile-app .rule-card {
+  background: #fff;
+  padding: 14px 10px 5px;
+  border: 1px solid #e4e7e5;
+  border-radius: 12px;
+  text-align: left;
+  min-height: 123px
+}
+
+.rule-description {
+  display: flex !important;
+  align-items: flex-start
+}
+
+.rule-summary {
+  color: #929399;
+  font-size: 13px;
+  line-height: 1.6;
+  flex: 1
+}
+
+.rule-description .design-asset {
+  margin-top: -11px;
+  margin-right: -7px
+}
+
+.rule-detail {
+  padding: 15px;
+  font-size: 15px;
+  margin-top: 13px
+}
+
+.rule-detail-copy {
+  display: block
+}
+
+.text-button {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  color: #078650 !important;
+  margin-top: 12px !important
+}
+
+.teacher-form {
+  padding: 0 13px;
+  margin-bottom: 10px
+}
+
+.teacher-form .form-row:last-child {
+  border-bottom: 0
+}
+
+.teacher-meal {
+  padding: 10px;
+  margin-bottom: 13px
+}
+
+.teacher-meal .meal-photo {
+  width: 171px;
+  height: 147px
+}
+
+.teacher-meal .meal-main {
+  gap: 11px
+}
+
+.teacher-meal .meal-name {
+  font-size: 20px
+}
+
+.teacher-meal .dish-line {
+  line-height: 1.65
+}
+
+.meal-price {
+  color: #ff642e;
+  font-size: 25px;
+  display: block !important;
+  margin: 7px 6px
+}
+
+.mobile-app .payment-button {
+  height: 53px;
+  font-size: 22px;
+  border-radius: 9px
+}
+
+.payment-notice {
+  display: block !important;
+  font-size: 13px;
+  color: #a05f28;
+  padding-top: 10px
+}
+
+.payment-success {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 10px 18px
+}
+
+.success-seal {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 57px;
+  height: 57px;
+  background: #0c945b;
+  border-radius: 50%;
+  margin-bottom: 7px
+}
+
+.success-title {
+  font-size: 27px;
+  font-weight: 500;
+  letter-spacing: 1px
+}
+
+.payment-success .muted {
+  font-size: 17px
+}
+
+.record-tabs {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 10px
+}
+
+.record-tabs button {
+  border-radius: 21px;
+  background: #f0f2f1;
+  color: #7e8386;
+  height: 35px;
+  font-size: 17px
+}
+
+.records-list {
+  padding: 0 12px;
+  margin-bottom: 12px
+}
+
+.record-row {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #edf0ee;
+  gap: 5px
+}
+
+.record-row:last-child {
+  border-bottom: none
+}
+
+.record-copy {
+  display: flex !important;
+  flex-direction: column;
+  gap: 3px;
+  color: #71767c;
+  font-size: 13px
+}
+
+.status-tag {
+  font-size: 13px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  white-space: nowrap
+}
+
+.status-tag.ordered {
+  color: #338368;
+  background: #e8f5ed
+}
+
+.status-tag.stopped {
+  color: #ee991f;
+  background: #fff2df
+}
+
+
+.weekly-detail {
+  display: flex !important;
+  align-items: center;
+  padding: 15px 10px;
+  gap: 17px;
+  margin-bottom: 10px;
+  font-size: 15px
+}
+
+.profile-action {
+  width: 100%;
+  padding: 20px 15px !important;
+  margin-bottom: 12px !important;
+  display: flex !important;
+  align-items: center;
+  gap: 15px;
+  border-radius: 12px !important;
+  background: white !important
+}
+
+.profile-action-label {
+  flex: 1;
+  text-align: left
+}
+
+.mobile-toast {
+  position: absolute;
+  bottom: 95px;
+  left: 20px;
+  right: 20px;
+  padding: 14px 12px;
+  background: #18382deb;
+  color: white;
+  border-radius: 10px;
+  text-align: center;
+  z-index: 10;
+  font-size: 16px;
+  box-shadow: 0 4px 20px #13352924
+}
+
+.empty-state {
+  display: flex !important;
+  padding: 32px 15px;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+  color: #818b86
+}
+
+.is-showcase.screen-teacher .phone-status,
+.is-showcase.screen-records .phone-status {
+  height: 30px
+}
+
+.is-showcase.screen-teacher .mobile-header,
+.is-showcase.screen-records .mobile-header {
+  height: 45px
+}
+
+.is-showcase.screen-teacher .wechat-capsule,
+.is-showcase.screen-records .wechat-capsule {
+  top: 8px
+}
+
+.is-showcase.screen-teacher .form-row {
+  min-height: 46px
+}
+
+.is-showcase.screen-teacher .teacher-meal {
+  padding: 8px;
+  margin-bottom: 7px
+}
+
+.is-showcase.screen-teacher .meal-price {
+  font-size: 23px;
+  margin: 3px 6px
+}
+
+.is-showcase.screen-teacher .payment-button {
+  height: 51px
+}
+
+.is-showcase.screen-records .record-row {
+  padding: 9px 0
+}
+
+.mobile-app:not(.is-showcase) .mobile-header {
+  padding-top: env(safe-area-inset-top, 0px);
+  height: calc(62px + env(safe-area-inset-top, 0px))
+}
+
+@media(max-width:360px) {
+  .student-name {
+    font-size: 18px
+  }
+
+  .quick-action {
+    gap: 8px !important;
+    font-size: 16px !important
+  }
+
+  .meal-photo {
+    width: 155px
+  }
+
+
+  .reason-button {
+    gap: 4px !important
+  }
+}
+.mobile-app.native-client .mobile-header { padding-top: var(--status-top); height: calc(44px + var(--status-top)); }
