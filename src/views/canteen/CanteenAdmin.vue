@@ -64,7 +64,9 @@
           <div class="detail-periods"><span>{{ periodName(mealPeriod) }}
               <b>{{ selectedClass.ordered }}</b> 人</span><span>已停餐
               <b>{{ selectedClass.stopped }}</b> 人</span></div>
+          <table v-if="!showcase" class="data-table"><thead><tr><th>姓名</th><th>餐品</th><th>状态</th><th>停餐原因</th></tr></thead><tbody><tr v-for="order in detailOrders" :key="order.id"><td>{{ order.studentName }}</td><td>{{ order.mealName }}</td><td>{{ order.status === 'ordered' ? '已订餐' : '已停餐' }}</td><td>{{ order.reason || '—' }}</td></tr><tr v-if="!detailOrders.length"><td colspan="4">暂无记录</td></tr></tbody></table>
         </div>
+        <div v-if="!showcase" class="table-scroll"><h2>教师订餐明细</h2><table class="data-table"><thead><tr><th>教师</th><th>餐品</th><th>金额</th><th>支付状态</th></tr></thead><tbody><tr v-for="order in dailyData.orders.filter(item => item.userType === 'teacher')" :key="order.id"><td>{{ order.studentName }}</td><td>{{ order.mealName }}</td><td>¥{{ order.price }}</td><td>{{ order.paymentStatus === 'TEST_PAID' ? '测试支付（未扣款）' : order.paymentStatus }}</td></tr></tbody></table></div>
         <div class="export-actions"><button class="admin-button primary" @click="exportDaily(false)">
             <UiIcon name="download" :size="22" tone="white" />导出当日统计
           </button><button class="admin-button" @click="exportDaily(true)">
@@ -100,7 +102,7 @@
                 <tr v-if="!monthlyStudents.length">
                   <td colspan="4" class="table-empty">该月份暂无统计数据</td>
                 </tr>
-                <tr v-else class="continuation">
+                <tr v-else-if="showcase" class="continuation">
                   <td>…</td>
                   <td>…</td>
                   <td></td>
@@ -112,11 +114,11 @@
           <section class="chart-panel">
             <h3>班级订餐天数统计 <small>（总订餐天数）</small></h3>
             <div class="bar-chart" role="img" :aria-label="chartDescription">
-              <div class="chart-axis"><span v-for="tick in [1000,800,600,400,200,0]"
+              <div class="chart-axis"><span v-for="tick in chartTicks"
                   :key="tick">{{ tick.toLocaleString() }}</span></div>
               <div class="chart-plot">
                 <div v-for="row in chartRows" :key="row.name" class="bar-column">
-                  <div class="bar" :style="{ height: row.total / 10 + '%' }"><span>{{ row.total }}</span></div><span
+                  <div class="bar" :style="{ height: row.total / chartMax * 100 + '%' }"><span>{{ row.total }}</span></div><span
                     class="bar-label">{{ row.name }}</span>
                 </div><span v-if="!chartRows.length" class="chart-empty">暂无数据</span>
               </div>
@@ -137,11 +139,12 @@
         <div class="report-filters"><label>用餐时段 <select v-model="mealPeriod">
               <option v-for="period in mealPeriods" :key="period.key" :value="period.key">{{ period.label }}</option>
             </select></label></div>
+        <button v-if="!showcase" class="admin-button primary" @click="beginEditMenu({ date, day: '', period: mealPeriod, name: '', dishes: [], art: mealPeriod === 'snack' ? 'diet' : 'lunch', price: mealPeriod === 'snack' ? 6 : mealPeriod === 'dinner' ? 15 : 18 })">发布菜谱</button>
         <div class="admin-menu-list">
           <article v-for="item in visibleMenus" :key="item.date">
             <DesignAsset :name="item.art" :width="75" :height="75" />
             <div>
-              <h3>{{ item.day }} · {{ item.name }}</h3>
+              <h3>{{ item.date }} {{ item.day }} · {{ item.name }}</h3>
               <p>{{ item.dishes.join(' · ') }}</p>
             </div>
             <button v-if="!showcase" class="table-link" @click="beginEditMenu(item)">修改</button>
@@ -149,12 +152,15 @@
         </div>
         <form v-if="editingMenu" class="menu-editor" @submit.prevent="saveMenu">
           <div class="menu-editor-heading"><strong>修改 {{ editingMenu.day }}{{ periodName(editingMenu.period) }}</strong><button type="button" aria-label="关闭菜谱编辑" @click="editingMenu = null"><UiIcon name="close" :size="20" /></button></div>
+          <label>日期<input v-model="editingMenu.date" type="date" required /></label>
+          <label>价格<input v-model.number="editingMenu.price" type="number" min="0" step="0.01" required /></label>
           <label>餐品名称<input v-model.trim="editingMenu.name" maxlength="40" required /></label>
           <label>菜品内容<textarea v-model="editingMenu.dishesText" rows="3" maxlength="160" required /></label>
           <div class="menu-editor-actions"><button type="button" class="admin-button" @click="editingMenu = null">取消</button><button type="submit" class="admin-button primary" :disabled="savingMenu">{{ savingMenu ? '保存中…' : '保存菜谱' }}</button></div>
         </form>
       </template>
       <template v-else-if="view === 'classes'">
+        <p>以下为今日各时段订餐人数与停餐餐次。</p>
         <table class="data-table">
           <thead>
             <tr>
@@ -175,6 +181,7 @@
         </table>
       </template>
       <template v-else-if="view === 'roles'">
+        <p>角色资料展示；账号授权请在 RuoYi 系统管理中配置。</p>
         <table class="data-table">
           <thead>
             <tr>
@@ -224,8 +231,9 @@ import { canteenApi } from '../../canteen-mobile/data/canteen-api.js'
 
 const props = defineProps({ initialView: { type: String, default: 'daily' }, showcase: Boolean })
 const view = ref(props.initialView)
-const date = ref('2025-05-13')
-const month = ref('2025-05')
+const today = new Date().toLocaleDateString('sv-SE')
+const date = ref(props.showcase ? '2025-05-13' : today)
+const month = ref(props.showcase ? '2025-05' : today.slice(0,7))
 const classFilter = ref('')
 const mealPeriod = ref('lunch')
 const detailClass = ref('')
@@ -233,12 +241,12 @@ const message = ref('')
 const connectionState = ref(props.showcase ? 'showcase' : 'loading')
 const dailyData = ref({ rows: [], orders: [], metrics: {} })
 const monthlyData = ref({ students: [], chartRows: [] })
-const classRows = ref(staticClassStats.map(row => ({ ...row, lunch: row.ordered, dinner: row.ordered })))
-const menus = ref(staticMenus.map(row => ({ ...row, period: 'lunch', price: 18 })))
+const classRows = ref([])
+const menus = ref(props.showcase ? staticMenus.map(row => ({ ...row, period: 'lunch', price: 18 })) : [])
 const financeData = ref({ settlement: '学生餐费线下统一结算', prices: [
   { period: 'lunch', label: '午餐', teacherPrice: 18 },
-  { period: 'snack', label: '午点', teacherPrice: 8 },
-  { period: 'dinner', label: '晚餐', teacherPrice: 18 }
+  { period: 'snack', label: '午点', teacherPrice: 6 },
+  { period: 'dinner', label: '晚餐', teacherPrice: 15 }
 ] })
 const roles = ref([
   { name: '管理员', description: '系统设置、报表与全部业务管理', permissions: ['全部权限'] },
@@ -246,6 +254,7 @@ const roles = ref([
 ])
 const editingMenu = ref(null)
 const savingMenu = ref(false)
+let syncTimer, refreshing = false
 let messageTimer
 let dailyRequest = 0
 let monthlyRequest = 0
@@ -261,7 +270,7 @@ const navigation = [
   { key: 'roles', label: '权限管理', icon: 'settings' }
 ]
 const heading = computed(() => ({ daily: '每日用餐汇总', monthly: '月度用餐统计', finance: '财务统计', dishes: '菜品管理', classes: '班级管理', menus: '每周菜谱', roles: '角色与权限管理' }[view.value]))
-const connectionLabel = computed(() => ({ loading: '正在同步', connected: '三端已连接', error: '连接失败', showcase: '设计预览' }[connectionState.value]))
+const connectionLabel = computed(() => ({ loading: '正在同步', connected: '已同步 · 每 5 秒刷新', error: '连接失败', showcase: '设计预览' }[connectionState.value]))
 const classStats = computed(() => props.showcase ? staticClassStats.map(row => ({ ...row, lunch: row.ordered, dinner: row.ordered })) : classRows.value)
 const dailyRows = computed(() => props.showcase ? (date.value === '2025-05-13' ? classStats.value.map(row => ({ ...row, ordered: mealPeriod.value === 'snack' ? row.snack : row.lunch })) : []) : dailyData.value.rows)
 const metrics = computed(() => {
@@ -275,6 +284,9 @@ const metrics = computed(() => {
     { label: '用餐班级', value: values.classes || 0, art: 'group' }
   ]
 })
+const detailOrders = computed(() => dailyData.value.orders.filter(row => row.className === detailClass.value))
+const chartMax = computed(() => props.showcase ? 1000 : Math.max(5, Math.ceil(Math.max(0, ...chartRows.value.map(row => row.total)) / 5) * 5))
+const chartTicks = computed(() => [5,4,3,2,1,0].map(value => chartMax.value * value / 5))
 const selectedClass = computed(() => dailyRows.value.find(row => row.name === detailClass.value) || dailyRows.value[0] || { ordered: 0, stopped: 0 })
 const fallbackStudents = [
   { className: '一年级1班', name: '林小满', ordered: 18, stopped: 2 },
@@ -293,13 +305,14 @@ const chartRows = computed(() => props.showcase
 const chartDescription = computed(() => chartRows.value.map(row => `${row.name} ${row.total}天`).join('，') || '该月份暂无数据')
 const visibleMenus = computed(() => {
   const values = menus.value.filter(item => item.period === mealPeriod.value || (!item.period && mealPeriod.value === 'lunch'))
-  return values.length ? values : staticMenus
+  return values.length ? values : (props.showcase ? staticMenus : [])
 })
 
 function navigate(key) {
   view.value = key === 'orders' ? 'daily' : key
   detailClass.value = ''
   message.value = ''
+  refreshActiveView()
 }
 function periodName(key) { return mealPeriods.find(item => item.key === key)?.label || key }
 function notify(text) {
@@ -319,7 +332,7 @@ async function loadDaily() {
   try {
     const value = await canteenApi.daily(date.value, mealPeriod.value)
     if (requestId === dailyRequest) dailyData.value = value
-    markConnected()
+    if (requestId === dailyRequest) markConnected()
   } catch (error) { if (requestId === dailyRequest) markError(error) }
 }
 async function loadMonthly() {
@@ -328,7 +341,7 @@ async function loadMonthly() {
   try {
     const value = await canteenApi.monthly(month.value, classFilter.value, mealPeriod.value)
     if (requestId === monthlyRequest) monthlyData.value = value
-    markConnected()
+    if (requestId === monthlyRequest) markConnected()
   } catch (error) { if (requestId === monthlyRequest) markError(error) }
 }
 async function loadReferenceData() {
@@ -356,15 +369,15 @@ async function saveMenu() {
       name: editingMenu.value.name.trim(),
       dishes: editingMenu.value.dishesText.split(/[、,，]/).map(value => value.trim()).filter(Boolean)
     })
-    menus.value = menus.value.map(value => value.date === updated.date && value.period === updated.period ? updated : value)
+    menus.value = [...menus.value.filter(value => !(value.date === updated.date && value.period === updated.period)), updated]
     editingMenu.value = null
     markConnected()
-    notify('菜谱已更新，用户端重新进入后即可看到')
+    notify('菜谱已保存，用户端将在 5 秒内同步')
   } catch (error) { markError(error) }
   finally { savingMenu.value = false }
 }
 function exportCsv(filename, rows) {
-  const escape = value => '"' + String(value ?? '').replaceAll('"', '""') + '"'
+  const escape = value => '"' + String(value ?? '').replace(/^[=+@\-\t\r]/, match => "'" + match).replaceAll('"', '""') + '"'
   const blob = new Blob(['\uFEFF' + rows.map(row => row.map(escape).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
@@ -377,7 +390,7 @@ function exportCsv(filename, rows) {
 function exportDaily(details) {
   if (!dailyRows.value.length) return notify('该日期暂无可导出的记录')
   const rows = details
-    ? [['日期', '班级', '用餐时段', '订餐人数', '停餐人数'], ...dailyRows.value.map(row => [date.value, row.name, periodName(mealPeriod.value), row.ordered, row.stopped])]
+    ? [['订单号', '日期', '班级', '姓名', '身份', '用餐时段', '餐品', '金额', '状态', '停餐原因', '支付状态'], ...dailyData.value.orders.map(row => [row.id, row.date, row.className, row.studentName, row.userType === 'teacher' ? '教师' : '学生', periodName(row.period), row.mealName, row.price, row.status === 'ordered' ? '已订餐' : '已停餐', row.reason, row.paymentStatus])]
     : [['日期', '班级', '用餐时段', '订餐人数', '停餐人数'], ...dailyRows.value.map(row => [date.value, row.name, periodName(mealPeriod.value), row.ordered, row.stopped])]
   exportCsv(`${date.value}-${details ? '订餐明细' : '用餐统计'}`, rows)
 }
@@ -389,7 +402,16 @@ function exportMonthly() {
 watch([date, mealPeriod], loadDaily)
 watch([month, classFilter, mealPeriod], loadMonthly)
 watch(mealPeriod, () => { editingMenu.value = null })
-onMounted(() => { if (!props.showcase) Promise.all([loadDaily(), loadMonthly(), loadReferenceData()]) })
-onBeforeUnmount(() => clearTimeout(messageTimer))
+async function refreshActiveView() {
+  if (props.showcase || refreshing) return
+  refreshing = true
+  try {
+    if (view.value === 'daily') await loadDaily()
+    else if (view.value === 'monthly') await loadMonthly()
+    else await loadReferenceData()
+  } finally { refreshing = false }
+}
+onMounted(() => { if (!props.showcase) { Promise.all([loadDaily(), loadMonthly(), loadReferenceData()]); syncTimer = setInterval(refreshActiveView, 5000) } })
+onBeforeUnmount(() => { clearTimeout(messageTimer); clearInterval(syncTimer); dailyRequest++; monthlyRequest++ })
 </script>
 <style src="./canteen-admin.css"></style>

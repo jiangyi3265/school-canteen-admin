@@ -43,9 +43,15 @@ $env:CANTEEN_API_TARGET = 'http://127.0.0.1:18083'
 npm run dev:canteen
 ```
 
-打开 `/canteen.html?view=mobile` 查看用户端，打开 `/canteen.html?view=admin` 查看实时管理端，打开 `/canteen.html` 查看固定设计总览。
+打开 `/canteen.html` 或 `/canteen.html?view=mobile` 查看联网用户端，打开 `/canteen.html?view=admin` 查看管理端；固定设计总览保留在 `/canteen.html?view=board`。
 
 生产构建使用 `npm run build:prod`，设计预览构建使用 `npm run build:canteen`。
+
+## 数据同步
+
+用户端、教师订餐与后台共用食堂 API。后台每 5 秒更新当前页面；日报明细包含姓名、餐品和停餐原因，教师订单单独列出；月报人数和图表均来自实际订单，支持班级/月份/时段筛选。订餐明细导出包含逐笔订单。菜谱支持发布、改名、价格与菜品编辑，联网用户端自动接收更新。
+
+`build:canteen` 输出需要将 `/dev-api` 反向代理至同一食堂后端。开发环境可用后端仓库的 `scripts/start-canteen-local.ps1 -Port 18083` 启动本机服务。设计总览使用静态数据，不参与联调。角色页面展示角色资料，真实支付和食堂身份权限尚待接入。
 
 ## 项目结构
 
@@ -58,7 +64,7 @@ src/router/              路由配置
 src/store/               Pinia 状态管理
 public/canteen/          食堂界面图片与图标资源
 vite/                    Vite 插件与构建辅助逻辑
-canteen.html             独立设计总览入口
+canteen.html             联网用户端、后台及设计预览入口
 ```
 
 ## 简历描述示例

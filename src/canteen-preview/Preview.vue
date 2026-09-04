@@ -71,7 +71,7 @@
   <div v-else-if="mode === 'mobile'" class="mobile-preview-page">
     <div class="standalone-mobile">
       <CanteenMobile :initial-page="page" />
-    </div><a class="return-to-board" href="?view=board">设计总览</a>
+    </div><nav class="return-to-board"><a href="?view=admin">管理后台</a> · <a href="?view=board">设计总览</a></nav>
   </div>
   <CanteenAdmin v-else :initial-view="page === 'monthly' ? 'monthly' : 'daily'" />
 </template>
@@ -81,7 +81,7 @@ import CanteenMobile from '../canteen-mobile/components/CanteenMobile.vue'
 import UiIcon from '../canteen-mobile/components/UiIcon.vue'
 import CanteenAdmin from '../views/canteen/CanteenAdmin.vue'
 const params = new URLSearchParams(location.search)
-const mode = ref(['mobile','admin'].includes(params.get('view')) ? params.get('view') : 'board')
+const mode = ref(['mobile','admin','board'].includes(params.get('view')) ? params.get('view') : 'mobile')
 const page = params.get('page') || 'home'
 const revision = ref(0)
 const boardZoom = ref(Math.min(1, Math.max(768, window.innerWidth - 16) / 1536))

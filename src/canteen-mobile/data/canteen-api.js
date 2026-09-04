@@ -1,12 +1,19 @@
 const DEFAULT_API_BASE = typeof window === 'undefined' ? 'http://127.0.0.1:8080' : '/dev-api'
 
-function apiBase() {
+export function apiBase() {
   try {
-    const saved = typeof uni !== 'undefined' ? uni.getStorageSync('canteen-api-base') : ''
+    const saved = typeof uni !== 'undefined' ? uni.getStorageSync('canteen-api-base') : localStorage.getItem('canteen-api-base')
     return String(saved || DEFAULT_API_BASE).replace(/\/$/, '')
   } catch {
     return DEFAULT_API_BASE
   }
+}
+
+export function setApiBase(value) {
+  const base = String(value || '').trim().replace(/\/$/, '')
+  if (base && !/^https?:\/\/[^\s]+$/i.test(base) && !/^\/(?!\/)[^\s]*$/.test(base)) throw new Error('请输入有效的服务地址')
+  if (typeof uni !== 'undefined') uni.setStorageSync('canteen-api-base', base)
+  else localStorage.setItem('canteen-api-base', base)
 }
 
 function unwrap(payload) {
@@ -23,6 +30,7 @@ function request(path, options = {}) {
       uni.request({
         url,
         method,
+        timeout: 10000,
         data: options.body,
         header: { 'content-type': 'application/json' },
         success(response) {
@@ -35,14 +43,18 @@ function request(path, options = {}) {
       })
     })
   }
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 10000)
   return fetch(url, {
+    signal: controller.signal,
     method,
     headers: { 'Content-Type': 'application/json' },
     body: options.body ? JSON.stringify(options.body) : undefined
   }).then(async response => {
     if (!response.ok) throw new Error(`服务请求失败（${response.status}）`)
     return unwrap(await response.json())
-  })
+  }).catch(error => { throw new Error(error.name === 'AbortError' ? '请求超时，请检查服务地址' : error.message) })
+    .finally(() => clearTimeout(timer))
 }
 
 const query = params => Object.entries(params)

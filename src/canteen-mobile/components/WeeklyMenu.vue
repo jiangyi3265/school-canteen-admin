@@ -1,6 +1,6 @@
 <template>
   <view class="weekly-menu" :class="{ compact }">
-    <view class="section-heading"><text>{{ title }}</text><text class="week-range">5.12–5.18</text></view>
+    <view class="section-heading"><text>{{ title }}</text><text class="week-range">{{ dateRange }}</text></view>
     <view class="week-grid"><button v-for="item in displayMenus" :key="item.date" class="week-day"
         :aria-label="item.day + '菜单'" @click="$emit('select', item.date)"><text class="week-label">{{ item.day }}</text>
         <DesignAsset :name="item.art" :width="60" :height="60" :label="item.name" />
@@ -11,13 +11,13 @@
 </template>
 <script setup>
 import { computed } from 'vue'
-import { weekMenus } from '../data/canteen.js'
 import DesignAsset from './DesignAsset.vue'
 const props = defineProps({ title: { type: String, default: '本周菜单预览' }, compact: Boolean, menus: { type: Array, default: () => [] } })
 const displayMenus = computed(() => {
   const lunchMenus = props.menus.filter(item => !item.period || item.period === 'lunch')
-  return lunchMenus.length ? lunchMenus : weekMenus
+  return lunchMenus.sort((a,b) => a.date.localeCompare(b.date)).slice(0,5)
 })
+const dateRange = computed(() => displayMenus.value.length ? displayMenus.value[0].date.slice(5) + ' – ' + displayMenus.value[displayMenus.value.length - 1].date.slice(5) : '暂无菜谱')
 defineEmits(['select'])
 </script>
 <style scoped>
