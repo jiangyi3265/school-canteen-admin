@@ -1,7 +1,7 @@
 <template>
   <view class="weekly-menu" :class="{ compact }">
     <view class="section-heading"><text>{{ title }}</text><text class="week-range">5.12–5.18</text></view>
-    <view class="week-grid"><button v-for="item in weekMenus" :key="item.date" class="week-day"
+    <view class="week-grid"><button v-for="item in displayMenus" :key="item.date" class="week-day"
         :aria-label="item.day + '菜单'" @click="$emit('select', item.date)"><text class="week-label">{{ item.day }}</text>
         <DesignAsset :name="item.art" :width="60" :height="60" :label="item.name" />
         <view class="mini-dishes"><text class="mini-dish" v-for="dish in item.dishes.slice(0,3)"
@@ -10,9 +10,14 @@
   </view>
 </template>
 <script setup>
+import { computed } from 'vue'
 import { weekMenus } from '../data/canteen.js'
 import DesignAsset from './DesignAsset.vue'
-defineProps({ title: { type: String, default: '本周菜单预览' }, compact: Boolean })
+const props = defineProps({ title: { type: String, default: '本周菜单预览' }, compact: Boolean, menus: { type: Array, default: () => [] } })
+const displayMenus = computed(() => {
+  const lunchMenus = props.menus.filter(item => !item.period || item.period === 'lunch')
+  return lunchMenus.length ? lunchMenus : weekMenus
+})
 defineEmits(['select'])
 </script>
 <style scoped>

@@ -3,7 +3,7 @@ import path from 'path'
 import createVitePlugins from './vite/plugins'
 import canteenWeb from './vite/canteen-web.js'
 
-const baseUrl = 'http://localhost:8080' // 后端接口
+const baseUrl = process.env.CANTEEN_API_TARGET || 'http://localhost:8080' // 后端接口
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode, command }) => {

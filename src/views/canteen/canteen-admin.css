@@ -10,6 +10,16 @@
   color: #303536
 }
 
+.canteen-admin:not(.admin-showcase) {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden
+}
+
+.canteen-admin:not(.admin-showcase) .admin-main {
+  overflow-y: auto
+}
+
 .canteen-admin * {
   box-sizing: border-box
 }
@@ -135,6 +145,16 @@
   background: #f3f6f4;
   padding: 3px 7px;
   border-radius: 4px
+}
+
+.demo-label.connected {
+  color: #17704d;
+  background: #e9f5ed
+}
+
+.demo-label.error {
+  color: #b54a2b;
+  background: #fff0eb
 }
 
 .metric-grid {
@@ -604,6 +624,11 @@
   padding: 15px
 }
 
+.admin-menu-list article > div {
+  flex: 1;
+  min-width: 0
+}
+
 .admin-menu-list h3 {
   font-size: 17px
 }
@@ -612,6 +637,64 @@
   font-size: 14px;
   color: #808880;
   margin-top: 5px
+}
+
+.menu-editor {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr auto;
+  align-items: end;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #cfe3d7;
+  border-radius: 10px;
+  background: #f7fbf8
+}
+
+.menu-editor-heading {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between
+}
+
+.menu-editor-heading button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer
+}
+
+.menu-editor label {
+  display: grid;
+  gap: 7px;
+  color: #4f5954;
+  font-size: 14px
+}
+
+.menu-editor input,
+.menu-editor textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d7dfda;
+  border-radius: 7px;
+  background: white;
+  color: #252a2d;
+  font: inherit
+}
+
+.menu-editor textarea {
+  resize: vertical
+}
+
+.menu-editor-actions {
+  display: flex;
+  gap: 8px
 }
 
 .admin-showcase {
@@ -648,7 +731,7 @@
 
 @media(min-width:1200px) {
   .canteen-admin:not(.admin-showcase) .admin-main {
-    padding: 32px 40px
+    padding: 20px 40px
   }
 
   .canteen-admin:not(.admin-showcase) .canteen-sidebar {
@@ -746,6 +829,10 @@
   }
 
   .canteen-admin:not(.admin-showcase) .admin-menu-list {
+    grid-template-columns: 1fr
+  }
+
+  .canteen-admin:not(.admin-showcase) .menu-editor {
     grid-template-columns: 1fr
   }
 

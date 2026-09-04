@@ -12,11 +12,13 @@ export const weekMenus = [
   { day: '周五', date: '2025-05-16', art: 'friday', name: '香菇滑鸡套餐', dishes: ['香菇滑鸡', '炒时蔬', '海带汤'] }
 ]
 
-export function menuFor(date, period, teacher = false) {
+export function menuFor(date, period, teacher = false, menus = weekMenus) {
+  const remote = menus.find(item => item.date === date && item.period === period)
+  if (remote) return { ...remote, price: Number(remote.price || (period === 'snack' ? 8 : 18)) }
   if (period === 'snack') return { name: '营养午点', dishes: ['鲜牛奶', '松软小面包', '时令水果'], art: 'diet', description: '一份午点，补充午后好能量', price: 6 }
   if (period === 'dinner') return { name: '番茄鸡蛋套餐', dishes: ['番茄炒蛋', '清炒时蔬', '米饭', '紫菜蛋花汤'], art: 'wednesday', description: '荤素搭配，营养好滋味', price: 15 }
   if (teacher) return { name: '土豆牛腩套餐', dishes: ['土豆牛肉', '炒青菜', '米饭', '玉米汤'], art: 'beef', description: '营养均衡，美味可口', price: 18 }
-  const menu = weekMenus.find(item => item.date === date) || weekMenus[1]
+  const menu = menus.find(item => item.date === date && (!item.period || item.period === 'lunch')) || weekMenus[1]
   return { ...menu, art: date === '2025-05-13' ? 'lunch' : menu.art, description: '营养均衡，美味可口', price: 18 }
 }
 

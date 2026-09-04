@@ -4,7 +4,7 @@
 
 ## 项目简介
 
-本仓库面向学校食堂运营人员和系统管理员。页面包含每日用餐汇总、班级明细、午餐/午点/晚餐统计、月度报表、CSV 导出、菜品与菜谱入口、班级和角色管理入口，并提供与用户端设计一致的交互预览。当前食堂看板使用示例数据，后续可通过 `school-canteen-backend` 接入真实业务数据。
+本仓库面向学校食堂运营人员和系统管理员。页面包含每日用餐汇总、班级明细、午餐/午点/晚餐统计、月度筛选与 CSV 导出、菜谱在线修改、财务配置、班级和角色资料。独立运行页面已接入 `school-canteen-backend`：用户端订餐、停餐和教师测试支付会反映到管理端，管理端修改菜谱后用户端会读取新数据；设计总览模式继续使用固定数据以保持评审画面稳定。
 
 ## 技术栈
 
@@ -30,11 +30,20 @@ npm ci
 npm run dev
 ```
 
-开发环境默认通过 `/dev-api` 访问后端。首次运行可将 `.env.development.example` 复制为 `.env.development` 后按实际部署地址修改代理配置。独立查看校园安心餐设计总览可运行：
+开发环境默认通过 `/dev-api` 代理到 `http://127.0.0.1:8080`。如果后端使用其他端口，可以先设置 `CANTEEN_API_TARGET`。独立查看校园安心餐页面可运行：
 
 ```bash
 npm run dev:canteen
 ```
+
+例如后端运行在 `18083`：
+
+```powershell
+$env:CANTEEN_API_TARGET = 'http://127.0.0.1:18083'
+npm run dev:canteen
+```
+
+打开 `/canteen.html?view=mobile` 查看用户端，打开 `/canteen.html?view=admin` 查看实时管理端，打开 `/canteen.html` 查看固定设计总览。
 
 生产构建使用 `npm run build:prod`，设计预览构建使用 `npm run build:canteen`。
 
@@ -42,7 +51,7 @@ npm run dev:canteen
 
 ```text
 src/views/canteen/       食堂每日统计、月报和管理入口
-src/canteen-mobile/      设计预览使用的用户端组件快照与示例数据
+src/canteen-mobile/      用户端组件快照、接口封装与设计数据
 src/api/                 RuoYi 后端接口封装
 src/layout/              管理后台整体布局
 src/router/              路由配置

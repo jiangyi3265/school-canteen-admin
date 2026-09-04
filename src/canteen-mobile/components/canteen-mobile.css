@@ -99,6 +99,11 @@
   opacity: .78
 }
 
+.primary-button.is-busy {
+  opacity: .58;
+  cursor: wait
+}
+
 .mobile-app .muted {
   color: var(--muted)
 }

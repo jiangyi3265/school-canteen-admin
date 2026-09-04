@@ -20,11 +20,11 @@
       <template v-if="page === 'home'">
         <view class="student-card mobile-card">
           <DesignAsset name="avatar" :width="73" :height="85" label="学生头像" />
-          <view class="student-copy"><text class="student-name">林小满 · 三年级2班</text><text
+          <view class="student-copy"><text class="student-name">{{ student.name }} · {{ student.className }}</text><text
               class="muted student-greeting">健康饮食 · 快乐成长</text></view>
           <DesignAsset class="profile-leaf" name="leaves" :width="59" :height="59" />
         </view>
-        <WeeklyMenu @select="showWeekly" />
+        <WeeklyMenu :menus="menus" @select="showWeekly" />
         <view class="quick-actions"><button v-for="action in quickActions" :key="action.page"
             class="quick-action mobile-card" @click="go(action.page)">
             <view class="action-icon" :class="{ amber: action.page === 'stop' }">
@@ -33,7 +33,7 @@
           </button></view>
       </template>
       <template v-else-if="page === 'order'">
-        <view class="day-selector mobile-card"><button v-for="(day, i) in weekMenus" :key="day.date" class="day-button"
+        <view class="day-selector mobile-card"><button v-for="(day, i) in lunchMenus" :key="day.date" class="day-button"
             :class="{ selected: date === day.date }"
             @click="date = day.date"><text>{{ i === 0 ? '今天' : i === 1 ? '明天' : day.day }}</text><text>{{ Number(day.date.slice(5,7)) + '.' + Number(day.date.slice(8)) }}</text></button>
         </view>
@@ -51,7 +51,7 @@
         <view class="notice warning">
           <UiIcon name="info" :size="23" tone="orange" /><text>费用线下收取</text>
         </view>
-        <button class="primary-button" @click="confirmOrder">确认订餐</button>
+        <button class="primary-button" :class="{ 'is-busy': busy }" :disabled="busy" @click="confirmOrder">{{ busy ? '正在提交…' : '确认订餐' }}</button>
         <view v-if="orderFeedback" class="inline-feedback">
           <UiIcon name="check" :size="20" tone="green" /><text>{{ orderFeedback }}</text><button
             @click="go('records')">查看记录</button>
@@ -69,7 +69,7 @@
           <view class="form-row"><text>用餐时段</text>
             <MealTabs v-model="period" compact />
           </view><text class="field-label">停餐类型</text>
-          <view class="reason-grid"><button v-for="reason in stopReasons" :key="reason.key" class="reason-button"
+          <view class="reason-grid"><button v-for="reason in reasons" :key="reason.key" class="reason-button"
               :class="{ selected: reasonKey === reason.key }" @click="reasonKey = reason.key">
               <DesignAsset :name="reason.key" :width="42" :height="55" />
               <view><text class="reason-title">{{ reason.title }}</text><text
@@ -78,14 +78,14 @@
             </button></view>
           <textarea v-if="reasonKey === 'other'" v-model="reasonNote" class="reason-note" placeholder="请填写停餐原因"
             maxlength="120" aria-label="停餐原因" /><button class="primary-button stop-submit"
-            @click="submitStop">提交申请</button>
+            :class="{ 'is-busy': busy }" :disabled="busy" @click="submitStop">{{ busy ? '正在提交…' : '提交申请' }}</button>
         </view>
       </template>
       <template v-else-if="page === 'rules'">
         <view class="notice rule-notice">
           <UiIcon name="info" :size="20" tone="green" /><text>规则仅供参考，费用结算在线下完成</text>
         </view>
-        <view class="rule-grid"><button v-for="reason in stopReasons" :key="reason.key" class="rule-card mobile-card"
+        <view class="rule-grid"><button v-for="reason in reasons" :key="reason.key" class="rule-card mobile-card"
             @click="openRule(reason)"><text class="reason-title">{{ reason.title }}</text>
             <view class="rule-description"><text class="rule-summary">{{ reason.description }}</text>
               <DesignAsset :name="reason.key" :width="57" :height="75" />
@@ -120,11 +120,11 @@
             <view class="meal-description"><text class="meal-name">{{ meal.name }}</text><text
                 v-for="dish in meal.dishes" :key="dish" class="dish-line">{{ dish }}</text></view>
           </view><text class="meal-price">¥{{ meal.price.toFixed(2) }}</text><button
-            class="primary-button payment-button" @click="pay">
-            <UiIcon name="wechat" :size="25" tone="white" />微信支付
+            class="primary-button payment-button" :class="{ 'is-busy': busy }" :disabled="busy" @click="pay">
+            <UiIcon name="wechat" :size="25" tone="white" />{{ busy ? '正在支付…' : '微信支付（测试）' }}
           </button><text v-if="paymentNotice" class="payment-notice">{{ paymentNotice }}</text>
         </view>
-        <view v-if="showcase" class="payment-success mobile-card">
+        <view v-if="showcase || paymentSuccess" class="payment-success mobile-card">
           <view class="success-seal">
             <UiIcon name="success" :size="38" tone="white" />
           </view><text class="success-title">支付成功</text><text class="muted">感谢您的订餐！</text>
@@ -146,24 +146,24 @@
               class="text-button" @click="go('order')">去选择餐食</button>
           </view>
         </view>
-        <WeeklyMenu title="本周菜谱" compact @select="showWeekly" />
+        <WeeklyMenu :menus="menus" title="本周菜谱" compact @select="showWeekly" />
       </template>
       <template v-else-if="page === 'weekly'">
         <view class="notice rule-notice">
           <UiIcon name="book" :size="20" tone="green" /><text>本周营养食谱 · 5.12–5.18</text>
         </view>
         <MealTabs v-model="period" />
-        <view v-for="item in weekMenus" :key="item.date" class="weekly-detail mobile-card">
-          <DesignAsset :name="period === 'snack' ? 'diet' : item.art" :width="86" :height="86" />
+        <view v-for="item in periodMenus" :key="item.date" class="weekly-detail mobile-card">
+          <DesignAsset :name="item.art" :width="86" :height="86" />
           <view><text class="meal-name">{{ item.day }} ·
-              {{ periodName(period) }}</text><text>{{ period === 'snack' ? '鲜牛奶 · 小面包 · 时令水果' : item.dishes.join(' · ') }}</text>
+              {{ periodName(period) }}</text><text>{{ item.dishes.join(' · ') }}</text>
           </view>
         </view>
       </template>
       <template v-else-if="page === 'profile'">
         <view class="student-card mobile-card">
           <DesignAsset name="avatar" :width="73" :height="85" />
-          <view class="student-copy"><text class="student-name">林小满 · 三年级2班</text><text
+          <view class="student-copy"><text class="student-name">{{ student.name }} · {{ student.className }}</text><text
               class="muted student-greeting">校园安心餐</text></view>
         </view>
         <button v-for="action in profileActions" :key="action.page" class="profile-action mobile-card"
@@ -183,39 +183,109 @@
   </view>
 </template>
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import DesignAsset from './DesignAsset.vue'
 import UiIcon from './UiIcon.vue'
 import MealTabs from './MealTabs.vue'
 import WeeklyMenu from './WeeklyMenu.vue'
 import { initialOrders, mealPeriods, menuFor, readOrders, saveOrders, stopReasons, upsertOrder, weekMenus } from '../data/canteen.js'
+import { canteenApi } from '../data/canteen-api.js'
 const props = defineProps({ initialPage: { type: String, default: 'home' }, showcase: Boolean })
 const statusTop = !props.showcase && typeof uni !== 'undefined' ? (uni.getWindowInfo?.().statusBarHeight || 0) : 0
 const page = ref(props.initialPage), date = ref('2025-05-13'), period = ref('lunch'), reasonKey = ref(''), reasonNote = ref(''), activeRule = ref(null), recordTab = ref('all')
 const orders = ref(props.showcase ? initialOrders.map(item => ({ ...item })) : readOrders())
-const orderFeedback = ref(''), paymentNotice = ref(''), toast = ref('')
+const student = ref({ id: 'student-001', name: '林小满', className: '三年级2班' })
+const menus = ref(weekMenus.map(item => ({ ...item, period: 'lunch', price: 18, description: '营养均衡，美味可口' })))
+const reasons = ref(stopReasons.map(item => ({ ...item })))
+const orderFeedback = ref(''), paymentNotice = ref(''), toast = ref(''), busy = ref(false), paymentSuccess = ref(false)
 let toastTimer
 const titles = { home: '校园安心餐', order: '选择订餐', stop: '停餐申请', rules: '停餐规则', teacher: '教师订餐', records: '订餐记录', weekly: '每周菜谱', profile: '我的' }
 const quickActions = [{ page: 'order', label: '明日订餐', icon: 'calendar' }, { page: 'stop', label: '申请停餐', icon: 'pause' }, { page: 'weekly', label: '每周菜谱', icon: 'book' }, { page: 'rules', label: '停餐规则', icon: 'shield' }]
 const navTabs = [{ page: 'home', label: '首页', icon: 'home' }, { page: 'order', label: '订餐', icon: 'calendar' }, { page: 'records', label: '记录', icon: 'record' }, { page: 'profile', label: '我的', icon: 'user' }]
 const profileActions = [{ page: 'teacher', label: '教师订餐', icon: 'user' }, { page: 'records', label: '订餐记录', icon: 'record' }, { page: 'rules', label: '停餐规则', icon: 'shield' }]
 const recordTabs = [{ key: 'all', label: '全部' }, { key: 'ordered', label: '已订餐' }, { key: 'stopped', label: '已停餐' }]
-const meal = computed(() => menuFor(date.value, period.value, page.value === 'teacher'))
+const lunchMenus = computed(() => {
+  const values = menus.value.filter(item => !item.period || item.period === 'lunch')
+  return values.length ? values : weekMenus
+})
+const periodMenus = computed(() => {
+  const values = menus.value.filter(item => item.period === period.value)
+  if (values.length) return values
+  return lunchMenus.value.map(item => menuFor(item.date, period.value, false, menus.value))
+})
+const meal = computed(() => menuFor(date.value, period.value, page.value === 'teacher', menus.value))
 const filteredOrders = computed(() => orders.value.filter(item => recordTab.value === 'all' || item.status === recordTab.value))
 watch(() => props.initialPage, value => { page.value = value })
-watch([date, period], () => { orderFeedback.value = ''; paymentNotice.value = '' })
+watch([date, period], () => { orderFeedback.value = ''; paymentNotice.value = ''; paymentSuccess.value = false })
+onMounted(() => { if (!props.showcase) syncData() })
 onBeforeUnmount(() => clearTimeout(toastTimer))
-function go(target) { page.value = target; activeRule.value = null; toast.value = ''; if (target === 'records' && !props.showcase) orders.value = readOrders() }
+function go(target) { page.value = target; activeRule.value = null; toast.value = ''; if (target === 'records' && !props.showcase) refreshOrders() }
 function notify(message) { clearTimeout(toastTimer); toast.value = message; toastTimer = setTimeout(() => { toast.value = '' }, 2800) }
 function changeDate(event) { date.value = event.detail.value }
 function periodName(key) { return mealPeriods.find(item => item.key === key)?.label || key }
 function weekday(value) { return ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][new Date(value + 'T12:00:00').getDay()] }
 function showWeekly(value) { date.value = value; go('weekly') }
 function commit(record) { orders.value = upsertOrder(orders.value, record); if (!props.showcase && !saveOrders(orders.value)) notify('当前浏览器无法保存，请勿关闭页面') }
-function confirmOrder() { if (!date.value) return notify('请选择订餐日期'); commit({ date: date.value, period: period.value, name: meal.value.name, status: 'ordered' }); orderFeedback.value = `${date.value.slice(5)} ${periodName(period.value)}已订餐`; notify('订餐成功，可在记录中查看') }
-function submitStop() { if (!reasonKey.value) return notify('请选择停餐类型'); if (reasonKey.value === 'other' && !reasonNote.value.trim()) return notify('请填写停餐原因'); commit({ date: date.value, period: period.value, name: meal.value.name, status: 'stopped', reason: reasonKey.value, note: reasonNote.value.trim() }); page.value = 'records'; recordTab.value = 'stopped'; notify(`${periodName(period.value)}停餐申请已保存`) }
+function normalizeOrder(record) { return { ...record, name: record.mealName || record.name } }
+function saveRemoteOrders(values) { orders.value = values.map(normalizeOrder); saveOrders(orders.value) }
+async function syncData() {
+  try {
+    const data = await canteenApi.bootstrap(student.value.id)
+    if (data.student) student.value = data.student
+    if (Array.isArray(data.menus) && data.menus.length) menus.value = data.menus
+    if (Array.isArray(data.stopReasons) && data.stopReasons.length) reasons.value = data.stopReasons.map(item => ({ key: item.key || item.value, title: item.title || item.label, description: item.description }))
+    if (Array.isArray(data.orders)) saveRemoteOrders(data.orders)
+  } catch (error) {
+    notify(error.message || '无法连接食堂服务')
+  }
+}
+async function refreshOrders() {
+  try { saveRemoteOrders(await canteenApi.orders({ userId: student.value.id })) }
+  catch (error) { notify(error.message || '订餐记录同步失败') }
+}
+async function confirmOrder() {
+  if (!date.value) return notify('请选择订餐日期')
+  if (props.showcase) {
+    commit({ date: date.value, period: period.value, name: meal.value.name, status: 'ordered' })
+  } else {
+    busy.value = true
+    try {
+      const saved = await canteenApi.order({ userId: student.value.id, studentName: student.value.name, className: student.value.className, date: date.value, period: period.value, mealName: meal.value.name, price: meal.value.price })
+      commit(normalizeOrder(saved))
+    } catch (error) { return notify(error.message || '订餐提交失败') }
+    finally { busy.value = false }
+  }
+  orderFeedback.value = `${date.value.slice(5)} ${periodName(period.value)}已订餐`
+  notify('订餐成功，管理端数据已同步')
+}
+async function submitStop() {
+  if (!reasonKey.value) return notify('请选择停餐类型')
+  if (reasonKey.value === 'other' && !reasonNote.value.trim()) return notify('请填写停餐原因')
+  const reason = reasons.value.find(item => item.key === reasonKey.value)
+  if (props.showcase) {
+    commit({ date: date.value, period: period.value, name: meal.value.name, status: 'stopped', reason: reason?.title, note: reasonNote.value.trim() })
+  } else {
+    busy.value = true
+    try {
+      const saved = await canteenApi.stop({ userId: student.value.id, studentName: student.value.name, className: student.value.className, date: date.value, period: period.value, reason: reasonKey.value === 'other' ? reasonNote.value.trim() : reason?.title })
+      commit(normalizeOrder(saved))
+    } catch (error) { return notify(error.message || '停餐申请提交失败') }
+    finally { busy.value = false }
+  }
+  page.value = 'records'; recordTab.value = 'stopped'; notify(`${periodName(period.value)}停餐申请已同步`)
+}
 function openRule(reason) { activeRule.value = activeRule.value?.key === reason.key ? null : reason }
 function applyRule() { reasonKey.value = activeRule.value.key; page.value = 'stop'; activeRule.value = null }
-function pay() { paymentNotice.value = '微信支付尚未接入，当前未扣款。'; notify(paymentNotice.value) }
+async function pay() {
+  if (props.showcase) { paymentNotice.value = '测试支付成功，未发生真实扣款。'; paymentSuccess.value = true; return }
+  busy.value = true
+  try {
+    await canteenApi.teacherOrder({ userId: 'teacher-001', studentName: '教师用户', className: '教师', date: date.value, period: period.value, mealName: meal.value.name, price: meal.value.price })
+    paymentSuccess.value = true
+    paymentNotice.value = '测试支付成功，订单已同步；未发生真实扣款。'
+    notify('教师订餐已同步到管理端')
+  } catch (error) { notify(error.message || '测试支付失败') }
+  finally { busy.value = false }
+}
 </script>
 <style src="./canteen-mobile.css"></style>
