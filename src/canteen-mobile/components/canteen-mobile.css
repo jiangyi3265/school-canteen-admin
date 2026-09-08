@@ -843,3 +843,6 @@
 
 .connection-settings { padding: 16px; margin-bottom: 14px; }
 .connection-settings input { box-sizing: border-box; width: 100%; margin: 12px 0; border: 1px solid #d2ddd7; border-radius: 6px; padding: 8px; height: 42px; font-size: 14px; }
+
+.day-selector { overflow-x: auto; }
+.day-selector .day-button { flex: 0 0 58px; }

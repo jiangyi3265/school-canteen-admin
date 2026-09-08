@@ -25,7 +25,7 @@
               class="muted student-greeting">健康饮食 · 快乐成长</text></view>
           <DesignAsset class="profile-leaf" name="leaves" :width="59" :height="59" />
         </view>
-        <WeeklyMenu :menus="menus" @select="showWeekly" />
+        <WeeklyMenu :menus="menus" :date="showcase ? '2025-05-13' : today" @select="showWeekly" />
         <view class="quick-actions"><button v-for="action in quickActions" :key="action.page"
             class="quick-action mobile-card" @click="go(action.page)">
             <view class="action-icon" :class="{ amber: action.page === 'stop' }">
@@ -55,7 +55,7 @@
         <button class="primary-button" :class="{ 'is-busy': busy }" :disabled="busy || !mealAvailable || !connected" @click="confirmOrder">{{ busy ? '正在提交…' : '确认订餐' }}</button>
         <view v-if="orderFeedback" class="inline-feedback">
           <UiIcon name="check" :size="20" tone="green" /><text>{{ orderFeedback }}</text><button
-            @click="go('records')">查看记录</button>
+            @click="recordOwner = 'student'; go('records')">查看记录</button>
         </view>
       </template>
       <template v-else-if="page === 'stop'">
@@ -79,7 +79,7 @@
             </button></view>
           <textarea v-if="reasonKey === 'other'" v-model="reasonNote" class="reason-note" placeholder="请填写停餐原因"
             maxlength="120" aria-label="停餐原因" /><button class="primary-button stop-submit"
-            :class="{ 'is-busy': busy }" :disabled="busy" @click="submitStop">{{ busy ? '正在提交…' : '提交申请' }}</button>
+            :class="{ 'is-busy': busy }" :disabled="busy || !connected" @click="submitStop">{{ busy ? '正在提交…' : '提交申请' }}</button>
         </view>
       </template>
       <template v-else-if="page === 'rules'">
@@ -145,19 +145,20 @@
           </view>
           <view v-if="!filteredOrders.length" class="empty-state">
             <UiIcon name="record" :size="35" /><text>还没有{{ recordTab === 'stopped' ? '停餐' : '订餐' }}记录</text><button
-              class="text-button" @click="go('order')">去选择餐食</button>
+              class="text-button" @click="go(recordOwner === 'teacher' ? 'teacher' : 'order')">去选择餐食</button>
           </view>
         </view>
-        <WeeklyMenu :menus="menus" title="本周菜谱" compact @select="showWeekly" />
+        <WeeklyMenu :menus="menus" :date="showcase ? '2025-05-13' : today" title="本周菜谱" compact @select="showWeekly" />
       </template>
       <template v-else-if="page === 'weekly'">
         <view class="notice rule-notice">
           <UiIcon name="book" :size="20" tone="green" /><text>已发布营养食谱</text>
         </view>
         <MealTabs v-model="period" />
+        <view v-if="!periodMenus.length" class="empty-state"><text>本周该时段暂无已发布菜谱</text></view>
         <view v-for="item in periodMenus" :key="item.date" class="weekly-detail mobile-card">
           <DesignAsset :name="item.art" :width="86" :height="86" />
-          <view><text class="meal-name">{{ item.day }} ·
+          <view><text class="meal-name">{{ item.date }} {{ item.day }} ·
               {{ periodName(period) }}</text><text>{{ item.dishes.join(' · ') }}</text>
           </view>
         </view>
@@ -197,12 +198,12 @@ import UiIcon from './UiIcon.vue'
 import MealTabs from './MealTabs.vue'
 import WeeklyMenu from './WeeklyMenu.vue'
 import { initialOrders, mealPeriods, menuFor, saveOrders, stopReasons, upsertOrder, weekMenus } from '../data/canteen.js'
+import { localDate, menusForWeek } from '../data/canteen-dates.js'
 import { canteenApi, apiBase, setApiBase } from '../data/canteen-api.js'
 const props = defineProps({ initialPage: { type: String, default: 'home' }, showcase: Boolean })
 const statusTop = !props.showcase && typeof uni !== 'undefined' ? (uni.getWindowInfo?.().statusBarHeight || 0) : 0
-const now = new Date()
-const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-')
-const page = ref(props.initialPage), date = ref(props.showcase ? '2025-05-13' : today), period = ref('lunch'), reasonKey = ref(''), reasonNote = ref(''), activeRule = ref(null), recordTab = ref('all')
+const today = ref(localDate())
+const page = ref(props.initialPage), date = ref(props.showcase ? '2025-05-13' : today.value), period = ref('lunch'), reasonKey = ref(''), reasonNote = ref(''), activeRule = ref(null), recordTab = ref('all')
 const orders = ref(props.showcase ? initialOrders.map(item => ({ ...item })) : [])
 const student = ref({ id: 'student-001', name: '林小满', className: '三年级2班' })
 const menus = ref(props.showcase ? weekMenus.map(item => ({ ...item, period: 'lunch', price: 18, description: '营养均衡，美味可口' })) : [])
@@ -212,7 +213,7 @@ const reasons = ref(stopReasons.map(item => ({ ...item })))
 const orderFeedback = ref(''), paymentNotice = ref(''), toast = ref(''), busy = ref(false), paymentSuccess = ref(false)
 let toastTimer
 const titles = { home: '校园安心餐', order: '选择订餐', stop: '停餐申请', rules: '停餐规则', teacher: '教师订餐', records: '订餐记录', weekly: '每周菜谱', profile: '我的' }
-const quickActions = [{ page: 'order', label: '明日订餐', icon: 'calendar' }, { page: 'stop', label: '申请停餐', icon: 'pause' }, { page: 'weekly', label: '每周菜谱', icon: 'book' }, { page: 'rules', label: '停餐规则', icon: 'shield' }]
+const quickActions = [{ page: 'order', label: props.showcase ? '明日订餐' : '选择订餐', icon: 'calendar' }, { page: 'stop', label: '申请停餐', icon: 'pause' }, { page: 'weekly', label: '每周菜谱', icon: 'book' }, { page: 'rules', label: '停餐规则', icon: 'shield' }]
 const navTabs = [{ page: 'home', label: '首页', icon: 'home' }, { page: 'order', label: '订餐', icon: 'calendar' }, { page: 'records', label: '记录', icon: 'record' }, { page: 'profile', label: '我的', icon: 'user' }]
 const profileActions = [{ page: 'teacher', label: '教师订餐', icon: 'user' }, { page: 'records', label: '订餐记录', icon: 'record' }, { page: 'rules', label: '停餐规则', icon: 'shield' }]
 const recordTabs = [{ key: 'all', label: '全部' }, { key: 'ordered', label: '已订餐' }, { key: 'stopped', label: '已停餐' }]
@@ -220,14 +221,14 @@ const lunchMenus = computed(() => {
   const values = menus.value.filter(item => !item.period || item.period === 'lunch')
   return values.length ? values.sort((a,b) => a.date.localeCompare(b.date)) : (props.showcase ? weekMenus : [])
 })
-const availableDates = computed(() => [...new Map(menus.value.map(item => [item.date, item])).values()].sort((a,b) => a.date.localeCompare(b.date)))
+const availableDates = computed(() => [...new Map(menus.value.filter(item => props.showcase || item.date >= today.value).map(item => [item.date, item])).values()].sort((a,b) => a.date.localeCompare(b.date)))
 const periodMenus = computed(() => {
-  const values = menus.value.filter(item => item.period === period.value)
-  if (values.length) return values
+  const values = menusForWeek(menus.value, date.value).filter(item => item.period === period.value)
+  if (!props.showcase || values.length) return values
   return lunchMenus.value.map(item => menuFor(item.date, period.value, false, menus.value))
 })
-const mealAvailable = computed(() => props.showcase || menus.value.some(item => item.date === date.value && item.period === period.value))
-const meal = computed(() => mealAvailable.value ? menuFor(date.value, period.value, page.value === 'teacher', menus.value) : { name: '该时段尚未发布菜谱', dishes: [], art: 'lunch', description: '请等待学校发布菜谱', price: 0 })
+const mealAvailable = computed(() => props.showcase || (date.value >= today.value && menus.value.some(item => item.date === date.value && item.period === period.value)))
+const meal = computed(() => mealAvailable.value ? menuFor(date.value, period.value, page.value === 'teacher', menus.value) : { name: date.value < today.value ? '已过订餐日期' : '该时段尚未发布菜谱', dishes: [], art: 'lunch', description: '请等待学校发布菜谱', price: 0 })
 const filteredOrders = computed(() => (recordOwner.value === 'teacher' ? teacherOrders.value : orders.value).filter(item => recordTab.value === 'all' || item.status === recordTab.value))
 watch(recordOwner, () => { recordTab.value = 'all' })
 watch(() => props.initialPage, value => { page.value = value })
@@ -244,10 +245,11 @@ function commit(record) { orders.value = upsertOrder(orders.value, record); if (
 function normalizeOrder(record) { return { ...record, name: record.mealName || record.name } }
 function saveRemoteOrders(values) { orders.value = values.map(normalizeOrder); saveOrders(orders.value) }
 async function connectService() {
-  try { setApiBase(serviceAddress.value); syncVersion++; syncing = false; connected.value = false; await syncData(); }
+  if (busy.value) return
+  try { setApiBase(serviceAddress.value); syncVersion++; syncing = false; connected.value = false; menus.value = []; orders.value = []; teacherOrders.value = []; await syncData(); }
   catch (error) { notify(error.message) }
 }
-function dayLabel(value) { return value === today ? '今天' : weekday(value) }
+function dayLabel(value) { return value === today.value ? '今天' : weekday(value) }
 async function syncData(quiet = false) {
   if (syncing) return
   syncing = true
@@ -259,7 +261,7 @@ async function syncData(quiet = false) {
     teacherOrders.value = teachers.map(normalizeOrder)
     if (data.student) student.value = data.student
     if (Array.isArray(data.menus)) menus.value = data.menus
-    if (!menus.value.some(item => item.date === date.value) && menus.value.length && !['stop', 'teacher'].includes(page.value)) date.value = [...menus.value].sort((a,b) => a.date.localeCompare(b.date)).find(item => item.date >= today)?.date || menus.value[menus.value.length - 1].date
+    today.value = localDate()
     if (Array.isArray(data.stopReasons) && data.stopReasons.length) reasons.value = data.stopReasons.map(item => ({ key: item.key || item.value, title: item.title || item.label, description: item.description }))
     if (Array.isArray(data.orders)) saveRemoteOrders(data.orders)
   } catch (error) {
@@ -270,6 +272,7 @@ async function confirmOrder() {
   if (busy.value) return
   if (!mealAvailable.value) return notify('该时段尚未发布菜谱')
   if (!date.value) return notify('请选择订餐日期')
+  const submitted = { date: date.value, period: period.value }
   if (props.showcase) {
     commit({ date: date.value, period: period.value, name: meal.value.name, status: 'ordered' })
   } else {
@@ -281,11 +284,13 @@ async function confirmOrder() {
     } catch (error) { return notify(error.message || '订餐提交失败') }
     finally { busy.value = false }
   }
-  orderFeedback.value = `${date.value.slice(5)} ${periodName(period.value)}已订餐`
+  // The response may arrive after the user has changed date or meal period.
+  if (submitted.date === date.value && submitted.period === period.value) orderFeedback.value = `${submitted.date.slice(5)} ${periodName(submitted.period)}已订餐`
   notify('订餐成功，管理端数据已同步')
 }
 async function submitStop() {
   if (busy.value) return
+  if (!props.showcase && !connected.value) return notify('请先连接食堂服务')
   if (!reasonKey.value) return notify('请选择停餐类型')
   if (reasonKey.value === 'other' && !reasonNote.value.trim()) return notify('请填写停餐原因')
   const reason = reasons.value.find(item => item.key === reasonKey.value)
@@ -313,6 +318,7 @@ async function pay() {
   try {
     const saved = await canteenApi.teacherOrder({ userId: 'teacher-001', studentName: '教师用户', className: '教师', date: date.value, period: period.value, mealName: meal.value.name, price: meal.value.price })
     teacherOrders.value = upsertOrder(teacherOrders.value, normalizeOrder(saved))
+    if (saved.date !== date.value || saved.period !== period.value || page.value !== 'teacher') return notify('教师订单已保存，请在教师记录中查看')
     paymentSuccess.value = true
     paymentNotice.value = '测试支付成功，订单已同步；未发生真实扣款。'
     notify('教师订餐已同步到管理端')

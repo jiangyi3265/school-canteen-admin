@@ -11,11 +11,12 @@
 </template>
 <script setup>
 import { computed } from 'vue'
+import { localDate, menusForWeek } from '../data/canteen-dates.js'
 import DesignAsset from './DesignAsset.vue'
-const props = defineProps({ title: { type: String, default: '本周菜单预览' }, compact: Boolean, menus: { type: Array, default: () => [] } })
+const props = defineProps({ title: { type: String, default: '本周菜单预览' }, compact: Boolean, date: { type: String, default: () => localDate() }, menus: { type: Array, default: () => [] } })
 const displayMenus = computed(() => {
-  const lunchMenus = props.menus.filter(item => !item.period || item.period === 'lunch')
-  return lunchMenus.sort((a,b) => a.date.localeCompare(b.date)).slice(0,5)
+  const lunchMenus = menusForWeek(props.menus, props.date).filter(item => !item.period || item.period === 'lunch')
+  return lunchMenus.sort((a,b) => a.date.localeCompare(b.date))
 })
 const dateRange = computed(() => displayMenus.value.length ? displayMenus.value[0].date.slice(5) + ' – ' + displayMenus.value[displayMenus.value.length - 1].date.slice(5) : '暂无菜谱')
 defineEmits(['select'])

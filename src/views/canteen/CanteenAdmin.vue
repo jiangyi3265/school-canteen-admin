@@ -93,7 +93,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="student in monthlyStudents" :key="student.name">
+                <tr v-for="student in monthlyStudents" :key="student.className + '|' + (student.userId || student.name)">
                   <td>{{ student.className }}</td>
                   <td>{{ student.name }}</td>
                   <td>{{ student.ordered }}</td>
@@ -152,7 +152,7 @@
         </div>
         <form v-if="editingMenu" class="menu-editor" @submit.prevent="saveMenu">
           <div class="menu-editor-heading"><strong>修改 {{ editingMenu.day }}{{ periodName(editingMenu.period) }}</strong><button type="button" aria-label="关闭菜谱编辑" @click="editingMenu = null"><UiIcon name="close" :size="20" /></button></div>
-          <label>日期<input v-model="editingMenu.date" type="date" required /></label>
+          <label>日期<input v-model="editingMenu.date" type="date" :disabled="editingMenu.existing" required /></label>
           <label>价格<input v-model.number="editingMenu.price" type="number" min="0" step="0.01" required /></label>
           <label>餐品名称<input v-model.trim="editingMenu.name" maxlength="40" required /></label>
           <label>菜品内容<textarea v-model="editingMenu.dishesText" rows="3" maxlength="160" required /></label>
@@ -287,6 +287,8 @@ const metrics = computed(() => {
 const detailOrders = computed(() => dailyData.value.orders.filter(row => row.className === detailClass.value))
 const chartMax = computed(() => props.showcase ? 1000 : Math.max(5, Math.ceil(Math.max(0, ...chartRows.value.map(row => row.total)) / 5) * 5))
 const chartTicks = computed(() => [5,4,3,2,1,0].map(value => chartMax.value * value / 5))
+const dailyReady = computed(() => props.showcase || (dailyData.value.date === date.value && dailyData.value.period === mealPeriod.value))
+const monthlyReady = computed(() => props.showcase || (monthlyData.value.month === month.value && monthlyData.value.period === mealPeriod.value && monthlyData.value.className === (classFilter.value || '全部班级')))
 const selectedClass = computed(() => dailyRows.value.find(row => row.name === detailClass.value) || dailyRows.value[0] || { ordered: 0, stopped: 0 })
 const fallbackStudents = [
   { className: '一年级1班', name: '林小满', ordered: 18, stopped: 2 },
@@ -327,22 +329,26 @@ function markError(error) {
 }
 async function loadDaily() {
   if (props.showcase) return
+  if (!date.value) { dailyRequest++; dailyData.value = { rows: [], orders: [], metrics: {} }; return }
   const requestId = ++dailyRequest
+  if (!dailyReady.value) dailyData.value = { rows: [], orders: [], metrics: {} }
   connectionState.value = 'loading'
   try {
     const value = await canteenApi.daily(date.value, mealPeriod.value)
     if (requestId === dailyRequest) dailyData.value = value
     if (requestId === dailyRequest) markConnected()
-  } catch (error) { if (requestId === dailyRequest) markError(error) }
+  } catch (error) { if (requestId === dailyRequest) { dailyData.value = { rows: [], orders: [], metrics: {} }; markError(error) } }
 }
 async function loadMonthly() {
   if (props.showcase) return
+  if (!month.value) { monthlyRequest++; monthlyData.value = { students: [], chartRows: [] }; return }
   const requestId = ++monthlyRequest
+  if (!monthlyReady.value) monthlyData.value = { students: [], chartRows: [] }
   try {
     const value = await canteenApi.monthly(month.value, classFilter.value, mealPeriod.value)
     if (requestId === monthlyRequest) monthlyData.value = value
     if (requestId === monthlyRequest) markConnected()
-  } catch (error) { if (requestId === monthlyRequest) markError(error) }
+  } catch (error) { if (requestId === monthlyRequest) { monthlyData.value = { students: [], chartRows: [] }; markError(error) } }
 }
 async function loadReferenceData() {
   if (props.showcase) return
@@ -358,16 +364,20 @@ async function loadReferenceData() {
   } catch (error) { markError(error) }
 }
 function beginEditMenu(item) {
-  editingMenu.value = { ...item, dishesText: item.dishes.join('、') }
+  editingMenu.value = { ...item, existing: menus.value.some(menu => menu.date === item.date && menu.period === item.period), dishesText: item.dishes.join('、') }
 }
 async function saveMenu() {
+  if (savingMenu.value) return
   if (!editingMenu.value?.name || !editingMenu.value?.dishesText) return notify('请填写餐品名称和菜品内容')
+  const draft = { ...editingMenu.value }
+  const dishes = draft.dishesText.split(/[、,，]/).map(value => value.trim()).filter(Boolean)
+  if (!dishes.length) return notify('请至少填写一道菜品')
   savingMenu.value = true
   try {
-    const updated = await canteenApi.updateMenu(editingMenu.value.date, editingMenu.value.period, {
-      ...editingMenu.value,
-      name: editingMenu.value.name.trim(),
-      dishes: editingMenu.value.dishesText.split(/[、,，]/).map(value => value.trim()).filter(Boolean)
+    const updated = await canteenApi.updateMenu(draft.date, draft.period, {
+      ...draft,
+      name: draft.name.trim(),
+      dishes
     })
     menus.value = [...menus.value.filter(value => !(value.date === updated.date && value.period === updated.period)), updated]
     editingMenu.value = null
@@ -388,6 +398,8 @@ function exportCsv(filename, rows) {
   notify('报表已导出，可使用 Excel 打开')
 }
 function exportDaily(details) {
+  if (!dailyReady.value) return notify('当前筛选数据尚未同步，请等待或重试')
+  if (details && !dailyData.value.orders.length) return notify('该日期暂无订餐明细')
   if (!dailyRows.value.length) return notify('该日期暂无可导出的记录')
   const rows = details
     ? [['订单号', '日期', '班级', '姓名', '身份', '用餐时段', '餐品', '金额', '状态', '停餐原因', '支付状态'], ...dailyData.value.orders.map(row => [row.id, row.date, row.className, row.studentName, row.userType === 'teacher' ? '教师' : '学生', periodName(row.period), row.mealName, row.price, row.status === 'ordered' ? '已订餐' : '已停餐', row.reason, row.paymentStatus])]
@@ -395,11 +407,12 @@ function exportDaily(details) {
   exportCsv(`${date.value}-${details ? '订餐明细' : '用餐统计'}`, rows)
 }
 function exportMonthly() {
+  if (!monthlyReady.value) return notify('当前筛选数据尚未同步，请等待或重试')
   if (!monthlyStudents.value.length) return notify('当前筛选暂无可导出的记录')
   exportCsv(`${month.value}-月度用餐统计`, [['月份', '班级', '学生', '时段', '订餐天数', '停餐天数'], ...monthlyStudents.value.map(row => [month.value, row.className, row.name, periodName(mealPeriod.value), row.ordered, row.stopped])])
 }
 
-watch([date, mealPeriod], loadDaily)
+watch([date, mealPeriod], () => { detailClass.value = ''; loadDaily() })
 watch([month, classFilter, mealPeriod], loadMonthly)
 watch(mealPeriod, () => { editingMenu.value = null })
 async function refreshActiveView() {
